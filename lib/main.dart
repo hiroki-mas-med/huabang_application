@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
         primaryColor: const Color(0xff00bfff),
         primarySwatch: Colors.blue,
       ),
-      initialRoute: "/config",
+      initialRoute: "/",
       routes: {
         "/": (context) => HomePage(),
         "/config": (context) => ConfigPage(),

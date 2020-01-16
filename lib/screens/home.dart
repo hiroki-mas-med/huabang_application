@@ -26,9 +26,9 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {  
     return Scaffold(
-      appBar: CustomAppBar(height: 80, contents: icons),
+      appBar: CustomAppBar(height: 50, contents: icons),
       body: Container(
-        height: 140,
+        height: 100,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[

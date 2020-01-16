@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/appbar.dart';
 import '../widgets/button.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 
 class ConfigPage extends StatelessWidget {
@@ -86,7 +87,7 @@ class ConfigPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {  
     return Scaffold(
-      appBar: CustomAppBar(height: 80),
+      appBar: CustomAppBar(height: 50),
       body: Container(
         height: 140,
         child: Row(
@@ -144,7 +145,7 @@ class ConfigPage extends StatelessWidget {
                         padding: EdgeInsets.only(bottom: 10.0),
                         child: Container(
                           alignment: Alignment.bottomCenter,
-                          child: Text("Auto Transfer",
+                          child: AutoSizeText("Auto Transfer",
                             textAlign: TextAlign.center,
                             style: TextStyle(                              
                               color: Colors.black,
@@ -191,7 +192,7 @@ class ConfigPage extends StatelessWidget {
                         padding: EdgeInsets.only(bottom: 10.0),
                         child: Container(
                           alignment: Alignment.bottomCenter,
-                          child: Text("Dark Mode",
+                          child: AutoSizeText("Dark Mode",
                             textAlign: TextAlign.center,
                             style: TextStyle(                              
                               color: Colors.black,

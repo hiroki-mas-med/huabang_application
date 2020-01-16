@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-
+import 'package:auto_size_text/auto_size_text.dart';
 
 Widget ScreenButton (Color color, String text){
   return Container(
     alignment: Alignment.center,
     color: color,
-    child: Text(text,
+    child: AutoSizeText(text,
       style: TextStyle(
         color: Colors.white,
         fontSize: 30,
