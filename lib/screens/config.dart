@@ -231,7 +231,7 @@ class ConfigPage extends StatelessWidget {
                 padding: EdgeInsets.all(10.0),
                 child: FlatButton(
                   padding: EdgeInsets.all(0.0),
-                  child: ScreenButton(Color(0xFF2D64B2), "Submit"),
+                  child: ScreenButton(Color(0xFF2D64B2), "OK"),
                   onPressed: (){
                     onPressOKButton();
                   },
