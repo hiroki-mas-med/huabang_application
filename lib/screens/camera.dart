@@ -8,6 +8,26 @@ class CameraPage extends StatelessWidget{
     double height = all_height/3;
     double width = all_height/5;
 
+    void onPressZoomInButton(){
+      print("zoom In");
+    }
+
+    void onPressZoomOutButton(){
+      print("zoom Out");
+    }
+
+    void onPressTakePictureButton(){
+      print("Take a photo");
+    }
+
+    void onPressLRChangeButton(){
+      print("LR change");
+    }
+
+    void onPressGalleryButton(BuildContext context){
+      Navigator.of(context).pushNamed('/gallery');        
+    }
+
     return Scaffold(
       body:  Stack(
         children: <Widget>[
@@ -36,7 +56,7 @@ class CameraPage extends StatelessWidget{
                         child: IconButton(                          
                           icon: Icon(Icons.zoom_in, color: Colors.white, size: width/2),
                           onPressed: (){
-                            print("zoom In");
+                            onPressZoomInButton();
                           },
                         ),
                       ),              
@@ -48,7 +68,7 @@ class CameraPage extends StatelessWidget{
                         child: IconButton(
                           icon: Icon(Icons.zoom_out, color: Colors.white, size: width/2),
                           onPressed: (){
-                            print("zoom Out");
+                            onPressZoomOutButton();
                           },
                         ),
                       ),              
@@ -70,7 +90,7 @@ class CameraPage extends StatelessWidget{
               child: IconButton(
                 icon: Icon(Icons.photo_camera, color: Colors.white, size: width/2),
                 onPressed: (){
-                  print("take a photo");
+                  onPressTakePictureButton();
                 },
               ),
             ),
@@ -119,7 +139,7 @@ class CameraPage extends StatelessWidget{
                             child: IconButton(
                               icon: Icon(Icons.remove_red_eye, color: Colors.white, size: width/2,),
                               onPressed: (){
-                                print("LR");
+                                onPressLRChangeButton();
                               },
                             )
                           )  
@@ -137,7 +157,7 @@ class CameraPage extends StatelessWidget{
                       child: IconButton(
                         icon: Icon(Icons.photo_library, color: Colors.white, size: width/2),
                         onPressed: (){
-                          print("Library");
+                          onPressGalleryButton(context);
                         },
                       ),
                     ),              
