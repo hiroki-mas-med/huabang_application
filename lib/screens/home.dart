@@ -8,7 +8,7 @@ class HomePage extends StatelessWidget {
   final List<Widget> icons = [
     IconButton(
       icon: Icon(Icons.settings),
-      color: Colors.white,
+      // color: Colors.white,
       onPressed: (){
         print("Config");
       },
@@ -47,7 +47,7 @@ class HomePage extends StatelessWidget {
                           alignment: Alignment.bottomLeft,
                           child: Text("ID",
                             style: TextStyle(
-                              color: Colors.black,
+                              // color: Colors.black,
                               fontSize: 20,
                               fontFamily: "open_sans"
                             )
@@ -73,7 +73,7 @@ class HomePage extends StatelessWidget {
                 padding: EdgeInsets.all(10.0),
                 child: FlatButton(
                   padding: EdgeInsets.all(0.0),
-                  child: ScreenButton(Color(0xFF2D64B2), "Camera"),
+                  child: screenButton(Color(0xFF2D64B2), "Camera"),
                   onPressed: (){
                     onPressCameraButton();
                   },
@@ -88,7 +88,7 @@ class HomePage extends StatelessWidget {
                 padding: EdgeInsets.all(10.0),
                 child: FlatButton(
                   padding: EdgeInsets.all(0.0),
-                  child: ScreenButton(Color(0xFF2DB34A), "Viewer"),
+                  child: screenButton(Color(0xFF2DB34A), "Viewer"),
                   onPressed: (){
                     onPressViewerButton();
                   },

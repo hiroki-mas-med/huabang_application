@@ -20,7 +20,7 @@ class ConfigPage extends StatelessWidget {
 
 
 
-  List<Widget> IPAddressForm(){
+  List<Widget> iPAddressForm(){
     return [
       Expanded(
         flex: 3,
@@ -32,7 +32,7 @@ class ConfigPage extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           child: Text(".",
             style: TextStyle(
-              color: Colors.black,
+              // color: Colors.black,
               fontSize: 20,
               fontFamily: "open_sans"                                    
             ),
@@ -50,7 +50,7 @@ class ConfigPage extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           child: Text(".",
             style: TextStyle(
-              color: Colors.black,
+              // color: Colors.black,
               fontSize: 20,
               fontFamily: "open_sans"                                    
             ),
@@ -68,7 +68,7 @@ class ConfigPage extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           child: Text(".",
             style: TextStyle(
-              color: Colors.black,
+              // color: Colors.black,
               fontSize: 20,
               fontFamily: "open_sans"                                    
             ),
@@ -108,7 +108,7 @@ class ConfigPage extends StatelessWidget {
                           alignment: Alignment.bottomLeft,
                           child: Text("IP Address",
                             style: TextStyle(
-                              color: Colors.black,
+                              // color: Colors.black,
                               fontSize: 20,
                               fontFamily: "open_sans"
                             )
@@ -123,7 +123,7 @@ class ConfigPage extends StatelessWidget {
                       child: Padding(
                         padding: EdgeInsets.only(bottom:10.0, left: 10.0, right: 10.0),
                         child: Row(
-                          children: IPAddressForm()
+                          children: iPAddressForm()
                         )
                       )
                     ),                
@@ -148,7 +148,7 @@ class ConfigPage extends StatelessWidget {
                           child: AutoSizeText("Auto Transfer",
                             textAlign: TextAlign.center,
                             style: TextStyle(                              
-                              color: Colors.black,
+                              // color: Colors.black,
                               fontSize: 20.0,
                               fontFamily: "open_sans"
                             ),
@@ -165,7 +165,7 @@ class ConfigPage extends StatelessWidget {
                           child: IconButton(
                             alignment: AlignmentDirectional.center,
                             icon: Icon(Icons.file_upload, size: 35.0),
-                            color: Colors.black,
+                            //color: Colors.black,
                             onPressed: (){
                               onPressedTransferButton();
                             },
@@ -195,7 +195,7 @@ class ConfigPage extends StatelessWidget {
                           child: AutoSizeText("Dark Mode",
                             textAlign: TextAlign.center,
                             style: TextStyle(                              
-                              color: Colors.black,
+                              // color: Colors.black,
                               fontSize: 20.0,
                               fontFamily: "open_sans"
                             ),
@@ -212,7 +212,7 @@ class ConfigPage extends StatelessWidget {
                           child: IconButton(
                             alignment: AlignmentDirectional.center,
                             icon: Icon(Icons.colorize, size: 35.0),
-                            color: Colors.black,
+                            // color: Colors.black,
                             onPressed: (){
                               onPressedDarkModeButton();
                             },
@@ -232,7 +232,7 @@ class ConfigPage extends StatelessWidget {
                 padding: EdgeInsets.all(10.0),
                 child: FlatButton(
                   padding: EdgeInsets.all(0.0),
-                  child: ScreenButton(Color(0xFF2D64B2), "OK"),
+                  child: screenButton(Color(0xFF2D64B2), "OK"),
                   onPressed: (){
                     onPressOKButton();
                   },

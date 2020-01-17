@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/home.dart';
 import 'screens/config.dart';
+import 'screens/image.dart';
+import 'screens/camera.dart';
 
 
 Future<void> main() async{
@@ -33,10 +35,12 @@ class MyApp extends StatelessWidget {
         primaryColor: const Color(0xff00bfff),
         primarySwatch: Colors.blue,
       ),
-      initialRoute: "/",
+      initialRoute: "/camera",
       routes: {
         "/": (context) => HomePage(),
         "/config": (context) => ConfigPage(),
+        "/image": (context) => ImagePage(),
+        "/camera": (context) => CameraPage()
       }
     );
   }
