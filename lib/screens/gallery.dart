@@ -1,18 +1,41 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:huabang_application/models/id.dart';
+import 'package:huabang_application/models/ip4.dart';
+import 'package:huabang_application/other.dart';
+import 'package:provider/provider.dart';
 import '../widgets/appbar.dart';
 
 
-class GalleryPage extends StatelessWidget {
-  
+class GalleryPage extends StatefulWidget{
+  GalleryPage({Key key}) : super(key: key);
+  @override
+  _GalleryPageState createState() => new _GalleryPageState();
+}
 
-  final Map<String, List<String>> file_dates = {
-    "2019/11/24": ["images/sample.jpeg", "images/sample.jpeg"],
-    "2020/12/24": ["images/sample.jpeg", "images/sample.jpeg", "images/sample.jpeg", "images/sample.jpeg"]
-  };
+
+class _GalleryPageState extends State<GalleryPage> {
+  List<String> selectedFiles = [];
+  Map<String, List<String>> file_dates = {};
+  String id;
+  List<String> ip4;
+  bool isUploading = false;
+  bool isOk = false;
+
 
   void onPressUploadButton(BuildContext context){
     print("Upload");
-    Navigator.of(context).pushNamed('/');        
+    GalleryUploadDialog(context, selectedFiles);
+  }
+
+  void onPressDeleteButton(BuildContext context){
+    print("Delete");
+    GalleryDeleteDialog(context, selectedFiles);
+  }
+
+  void onPressHomeButton(BuildContext context){
+    print("Home");
+    Navigator.of(context).pushNamed("/");
   }
 
   void onPressConfigButton(BuildContext context){
@@ -24,32 +47,137 @@ class GalleryPage extends StatelessWidget {
     Navigator.of(context).pushNamed('/image', arguments: fpath);
   }
 
-  void onLongPressImageButton(){
-    print("Long press");
+  void onLongPressImageButton(String fpath){
+    if (!selectedFiles.contains(fpath)){
+      selectedFiles.add(fpath);
+      print("Add");
+      setState(() {
+        
+      });
+    }else{
+      selectedFiles.remove(fpath);
+      print("Remove");
+      setState(() {
+        
+      });
+    }
   }
 
+  Color selectedColor(fpath){
+    if(selectedFiles.contains(fpath)){
+      return Colors.blue;
+    }else{
+      return Theme.of(context).canvasColor;
+    }
+  }
+
+
+  Future<void> initFunction()async{
+    id = Provider.of<ID>(context, listen: false).value;
+    ip4 = Provider.of<IP4>(context, listen: false).value;
+    //List<FileSystemEntity> contents = Directory(dir).listSync();
+    //List<String> fpaths = contents.map((content){return content.path;}).toList();
+    List<String> fpaths = ["images/logo.png", "images/sample.jpeg"];
+    setState(() {
+      file_dates = calc_dates(fpaths);
+    });
+    if(checkIP4(ip4)){
+       setState(() {
+         isUploading = true;
+       });
+       var res = await testWiFi(convertip2url(ip4));
+       setState(() {
+         isUploading = false;
+       });
+       print(["WiFi check", res]);
+       if (res){
+         setState(() {
+           isOk = true;
+         });
+       }else{
+          String err = "転送先のURLを確認しましたが、接続できません";
+          // 何かしらのエラーダイアログ、Homeボタンか、Configボタン
+          checkDialog(err, context);
+          setState(() {
+           isOk = false;
+          });
+       }
+    }else{
+      String err = "転送先のURLを確認しましたが、接続できません";
+      // 何かしらのエラーダイアログ、Homeボタンか、Configボタン
+      checkDialog(err, context);
+      setState(() {
+        isOk = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    // String dir = "images/";
+    initFunction();
+    super.initState();
+  }
 
 
   @override
   Widget build(BuildContext context) {
 
     // AppBarに表示するためのIcon
-    final List<Widget> icons = [
+    Widget icon_home = IconButton(
+      icon: Icon(Icons.home),
+      color: isUploading ? Colors.grey : Theme.of(context).textTheme.button.color,
+      onPressed: (){
+        onPressHomeButton(context);
+      },
+    );
+
+    Widget icon_setting= IconButton(
+      icon: Icon(Icons.settings),
+      color: isUploading ? Colors.grey : Theme.of(context).textTheme.button.color,
+      onPressed: (){
+        onPressConfigButton(context);
+      },
+    );
+
+
+    Widget icon_delete = selectedFiles.length > 0 ?
       IconButton(
-        icon: Icon(Icons.file_upload),
-        // color: Colors.white,
+        icon: Icon(Icons.delete),
+        color: isUploading ? Colors.grey : Theme.of(context).textTheme.button.color,
         onPressed: (){
-          onPressUploadButton(context);
+          onPressDeleteButton(context);
         },
-      ),    
-      IconButton(
-        icon: Icon(Icons.settings),
-        // color: Colors.white,
-        onPressed: (){
-          onPressConfigButton(context);
-        },
-      ),
-    ];
+      ) 
+      : Container();
+
+    Widget icon_upload(){
+      if(isOk && selectedFiles.length > 0){
+        return IconButton(
+          icon: Icon(Icons.file_upload),
+          color: isUploading ? Colors.grey : Theme.of(context).textTheme.button.color,
+          onPressed: (){
+            onPressUploadButton(context);
+          },
+        );
+      }else{
+        return Container();
+      }
+    }
+
+    final List<Widget> icons = [icon_upload(), icon_delete, icon_setting, icon_home];
+
+
+    Widget upLoadingContent(){
+      if (isUploading){
+        return Container(
+          alignment:Alignment.center,
+          child: CircularProgressIndicator()
+        );
+      }else{
+        return Container();
+      }
+    }
 
 
 
@@ -137,13 +265,13 @@ class GalleryPage extends StatelessWidget {
                                     child: Padding(                                    
                                       padding: EdgeInsets.all(1.0),                                      
                                       child: Container(             
-                                        color: Colors.blue,
+                                        color: selectedColor(files[idx]),
                                         child: GestureDetector(
                                           onTap: (){
                                             onPressImageButton(context, files[idx]);
                                           },
                                           onLongPress: (){
-                                            onLongPressImageButton();
+                                            onLongPressImageButton(files[idx]);
                                           },
                                           child: RawMaterialButton(
                                             child: Image.asset(files[idx]),
@@ -180,10 +308,15 @@ class GalleryPage extends StatelessWidget {
 
     return Scaffold(
       appBar: CustomAppBar(height: 50, contents: icons),
-      body: SingleChildScrollView(
-        child: Column(
-          children: contents()
-        ),
+      body: Stack(
+        children: <Widget>[
+          SingleChildScrollView(
+            child: Column(
+              children: contents()
+            ),
+          ),
+          upLoadingContent()
+        ],
       )
     );
   }
