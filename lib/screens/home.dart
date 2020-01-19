@@ -1,17 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:huabang_application/models/dark.dart';
 import 'package:huabang_application/models/id.dart';
 import 'package:provider/provider.dart';
 import '../widgets/appbar.dart';
 import '../widgets/button.dart';
 
 
-class HomePage extends StatelessWidget {
+
+class HomePage extends StatefulWidget{
+  HomePage({Key key}) : super(key: key);
+  @override
+  _HomePageState createState() => new _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   TextEditingController controller = TextEditingController();
 
   void onPressCameraButton(BuildContext context){
     if(validateID(controller.text) == null){
+      print("after validation");
       Provider.of<ID>(context, listen: false).setID(controller.text);
+      print("after set ID");
       Navigator.of(context).pushNamed('/camera');
+      print("after screen change");
     }
   }
 
@@ -37,6 +48,8 @@ class HomePage extends StatelessWidget {
         },
       )
     ];
+
+    print("make home widget");
 
     return WillPopScope(
       onWillPop: ()async=>false,

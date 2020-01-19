@@ -1,9 +1,18 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
+
+Future<String> camerapath()async{
+  final Directory extDir = await getExternalStorageDirectory();
+  // final Directory extDir = Directory("/storage/emulated/0/Pictures/huabang");
+  String path = '${extDir.path}/Pictures';
+  return path;
+}
 
 // IDと現在時間から、辞書を作成
 List<String> makeFileName(String id, String lr){
@@ -22,16 +31,18 @@ List<String> makeFileName(String id, String lr){
 }
 
 // File名から日付ごとの辞書を作成、
-Map<String, List<String>> calc_dates(List<String> fpaths){
-  Map<String, List<String>> result = {};
-  for (int idx = 0; idx < fpaths.length; idx++){
-    String col = converdate2string(DateTime.now());
-    if (result[col] == null){
-      result[col] = [fpaths[idx]];
+Map<String, List<File>> calc_dates(List<FileSystemEntity> files){
+  Map<String, List<File>> result = {};
+  files.forEach((file){
+    DateTime date = File(file.path).lastModifiedSync();
+    print(date);
+    String day = converdate2string(date);
+    if (result[day] == null){
+      result[day] = [file];
     }else{
-      result[col].add(fpaths[idx]);
+      result[day].add(file);
     }
-  }
+  });
   return result;
 }
 
@@ -121,32 +132,18 @@ String converdate2string(DateTime date){
   }
 
 
-  void GalleryUploadDialog(BuildContext context, List<String> sfpaths){
-    var sentence = sfpaths.length.toInt().toString() + "個のファイルが選択されています\n" +
-      "ファイル名は下記のとおりです、アップロードしてよろしいでしょうか？\n\n";
-    sfpaths.forEach((sfpath){
-      sentence += sfpath.split("/").last + "\n";
-    });
-
+  void stopDialog(String content, BuildContext context){
     showDialog(
       context: context,
-      builder: (_) =>
+      builder: (BuildContext context) => 
         AlertDialog(
-          title: Text("アップロード"),
-          content: SingleChildScrollView(
-            child: Text(sentence),
-          ),
+          title: Text("エラー"),
+          content: Text(content),
           actions: <Widget>[
             FlatButton(
-              child: Text("アップロード"),
+              child: Text("ホーム画面に戻る"),
               onPressed: (){
                 Navigator.of(context).pushNamed('/');
-              },
-            ),
-            FlatButton(
-              child: Text("続行"),
-              onPressed: (){
-                Navigator.of(context).pop();
               },
             ),
           ],
@@ -154,35 +151,6 @@ String converdate2string(DateTime date){
     );
   }
 
-  void GalleryDeleteDialog(BuildContext context, List<String> sfpaths){
-    var sentence = sfpaths.length.toInt().toString() + "個のファイルが選択されています\n" +
-      "ファイル名は下記のとおりです、削除してよろしいでしょうか？\n\n";
-    sfpaths.forEach((sfpath){
-      sentence += sfpath.split("/").last + "\n";
-    });
-    showDialog(
-      context: context,
-      builder: (_) =>
-        AlertDialog(
-          title: Text("削除"),
-          content: Text(sentence),
-          actions: <Widget>[
-            FlatButton(
-              child: Text("削除"),
-              onPressed: (){
-                Navigator.of(context).pushNamed('/');
-              },
-            ),
-            FlatButton(
-              child: Text("続行"),
-              onPressed: (){
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        )
-    );
-  }
 
 // WiFi関連
   String convertip2url(List<String> iplist){
@@ -192,6 +160,21 @@ String converdate2string(DateTime date){
   Future<bool> testWiFi(String url)async{
     try{
       var res = await http.get(url).timeout(Duration(seconds: 3));
+      if (res.statusCode == 200){
+        return true;
+      }else{
+        return false;
+      }
+    }catch (e){
+      print(e);
+      return false;
+    }
+  }
+
+  Future<bool> uploadFile(String url, String file, String fpath)async{
+    try{
+      String base64Image = base64Encode(File(fpath).readAsBytesSync());
+      var res = await http.post(url, body: {"image": base64Image, "name": file}).timeout(Duration(seconds: 3));
       if (res.statusCode == 200){
         return true;
       }else{

@@ -4,6 +4,7 @@ import 'package:huabang_application/models/dark.dart';
 import 'package:huabang_application/models/id.dart';
 import 'package:huabang_application/models/ip4.dart';
 import 'package:huabang_application/models/transfer.dart';
+import 'package:huabang_application/other.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'screens/home.dart';
@@ -13,7 +14,6 @@ import 'screens/camera.dart';
 import 'screens/gallery.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
-import 'other.dart';
 
 Future<void> main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,20 +21,19 @@ Future<void> main() async{
   // 画面を横向きに
   await setOrientation();
   // CameraやStorageの許可
-  // await permission();
+  await permission();
   // IPアドレスの読み込み
   List<String> ip4 = await readip4();
   bool transfer = await readTransfer();
   bool dark = await readDark();
   
+  print("permission OK");
   // データ保存先作成
-  // final Directory extDir = await getExternalStorageDirectory();
-  // String path = '${extDir.path}/Pictures';
-  // await Directory(path).create(recursive: true);
-
-  // 実験
-  // List<String> fpaths = ["images/logo.png", "images/sample.jpeg"];
-  // print(calc_dates(fpaths));
+  String path = await camerapath();
+  //final Directory extDir = await Dictionary(camerapath());
+  //String path = '${extDir.path}/Pictures';
+  print(path);
+  await Directory(path).create(recursive: true);
 
 
   runApp(
@@ -101,11 +100,11 @@ Future<void> setOrientation() async{
 
 Future<void> permission()async{
   var res0 = await PermissionHandler().requestPermissions([PermissionGroup.camera]);
-  if(res0[PermissionGroup.camera] != PermissionStatus.granted){
+  var res1 = await PermissionHandler().requestPermissions([PermissionGroup.storage]);
+  if(res0[PermissionGroup.camera] == PermissionStatus.denied){
     exit(0);
   }
-  var res1 = await PermissionHandler().requestPermissions([PermissionGroup.storage]);
-  if(res1[PermissionGroup.storage] != PermissionStatus.granted){
+  if(res1[PermissionGroup.storage] == PermissionStatus.denied){
     exit(0);
   }
 }

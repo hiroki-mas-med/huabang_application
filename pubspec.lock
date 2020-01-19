@@ -36,6 +36,15 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.5"
+  camera:
+    dependency: "direct main"
+    description:
+      path: "packages/camera"
+      ref: zoom_camera
+      resolved-ref: afc9bd8e0bd4c1953066dfcd6712839f42b0d31f
+      url: "git://github.com/ivk1800/plugins.git"
+    source: git
+    version: "0.5.7"
   charcode:
     dependency: transitive
     description:
@@ -76,6 +85,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_launcher_icons:
+    dependency: "direct main"
+    description:
+      name: flutter_launcher_icons
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.7.4"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -86,6 +102,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  hardware_buttons:
+    dependency: "direct main"
+    description:
+      name: hardware_buttons
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.0"
   http:
     dependency: "direct main"
     description:
@@ -294,6 +317,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.5.0"
+  yaml:
+    dependency: transitive
+    description:
+      name: yaml
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.2.0"
 sdks:
   dart: ">=2.5.0 <3.0.0"
   flutter: ">=1.12.13+hotfix.4 <2.0.0"

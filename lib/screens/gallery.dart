@@ -15,84 +15,221 @@ class GalleryPage extends StatefulWidget{
 
 
 class _GalleryPageState extends State<GalleryPage> {
-  List<String> selectedFiles = [];
-  Map<String, List<String>> file_dates = {};
+  // 選んだFileパス一覧
+  List<File> selectedFiles = [];
+  // 日付とファイルのセット
+  Map<String, List<File>> file_dates = {};
+  // ID
   String id;
+  // IPのリスト
   List<String> ip4;
+  // isUploading（Circularを表示するためのマーク）
   bool isUploading = false;
+  // これがOKなら、アップロードマークを表示しない
   bool isOk = false;
+  String dirpath;
+  String url;
+  int n_column = 3;
 
 
+
+  // ここからボタンを押した場合の表示
   void onPressUploadButton(BuildContext context){
-    print("Upload");
-    GalleryUploadDialog(context, selectedFiles);
+    var sentence = selectedFiles.length.toInt().toString() + "個のファイルが選択されています\n" +
+      "ファイル名は下記のとおりです、アップロードしてよろしいでしょうか？\n\n";
+    selectedFiles.forEach((selectedFile){
+      sentence += selectedFile.path.split("/").last + "\n";
+    });
+    showDialog(
+      context: context,
+      builder: (_) =>
+        AlertDialog(
+          title: Text("アップロード"),
+          content: SingleChildScrollView(
+            child: Text(sentence),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text("アップロード"),
+              onPressed: (){
+                Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
+                print("Upload");
+                selectedFiles.forEach((sfile) async {
+                  var sfpath  =sfile.path;
+                  var sfilename = sfpath.split("/").last;
+                  print(sfpath);
+                  var uploadResult = await uploadFile(url, sfilename, sfpath);
+                  if (!uploadResult){
+                    String err = "アップロードに失敗しました";
+                    stopDialog(err, context);
+                  }
+                });
+                print("Upload finish");
+              },
+            ),
+            FlatButton(
+              child: Text("キャンセル"),
+              onPressed: (){
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        )
+    );
+
   }
 
   void onPressDeleteButton(BuildContext context){
-    print("Delete");
-    GalleryDeleteDialog(context, selectedFiles);
+    var sentence = selectedFiles.length.toInt().toString() + "個のファイルが選択されています\n" +
+      "ファイル名は下記のとおりです、削除してよろしいでしょうか？\n\n";
+    selectedFiles.forEach((selectedFile){
+      sentence += selectedFile.path.split("/").last + "\n";
+    });
+    showDialog(
+      context: context,
+      builder: (_) =>
+        AlertDialog(
+          title: Text("削除"),
+          content: SingleChildScrollView(
+            child: Text(sentence),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text("削除"),
+              onPressed: (){
+                print("delete");
+                Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
+                selectedFiles.forEach((selectedFile){
+                  selectedFile.deleteSync(recursive: true);
+                  print(selectedFile.path);
+                });
+              },
+            ),
+            FlatButton(
+              child: Text("キャンセル"),
+              onPressed: (){
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        )
+    );
   }
 
   void onPressHomeButton(BuildContext context){
     print("Home");
-    Navigator.of(context).pushNamed("/");
+    Navigator.of(context).pushNamedAndRemoveUntil("/", (_) => false);
   }
 
   void onPressConfigButton(BuildContext context){
     print("Config");
-    Navigator.of(context).pushNamed('/config');        
+    Navigator.of(context).pushNamedAndRemoveUntil('/config', (_) => false);        
   }
 
-  void onPressImageButton(BuildContext context, String fpath){
-    Navigator.of(context).pushNamed('/image', arguments: fpath);
+  void onPressImageButton(BuildContext context, File file){
+    Navigator.of(context).pushNamed('/image', arguments: file);
   }
 
-  void onLongPressImageButton(String fpath){
-    if (!selectedFiles.contains(fpath)){
-      selectedFiles.add(fpath);
-      print("Add");
+  void onLongPressImageButton(File file){
+    if (!selectedFiles.contains(file)){
+      selectedFiles.add(file);
+      print(["add", file.path]);
       setState(() {
         
       });
     }else{
-      selectedFiles.remove(fpath);
-      print("Remove");
+      selectedFiles.remove(file);
+      print(["remove", file.path]);
       setState(() {
-        
       });
     }
   }
-
-  Color selectedColor(fpath){
-    if(selectedFiles.contains(fpath)){
+  // ここまで
+  
+  // 選択した場合の色について
+  Color selectedColor(File file){
+    if(selectedFiles.contains(file)){
       return Colors.blue;
     }else{
       return Theme.of(context).canvasColor;
     }
   }
 
+  // ダイアログについて
+  void checkDialog(String content, BuildContext context){
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => 
+        AlertDialog(
+          title: Text("エラー"),
+          content: Text(content),
+          actions: <Widget>[
+            FlatButton(
+              child: Text("ホーム画面に戻る"),
+              onPressed: (){
+                Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
+              },
+            ),
+            FlatButton(
+              child: Text("アップロードは行わない"),
+              onPressed: (){
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        )
+    );
+  }
 
+
+
+  // 始まるときの関数
   Future<void> initFunction()async{
+    // ID, IPアドレス、IDのセーブパスを読み込み
     id = Provider.of<ID>(context, listen: false).value;
     ip4 = Provider.of<IP4>(context, listen: false).value;
-    //List<FileSystemEntity> contents = Directory(dir).listSync();
-    //List<String> fpaths = contents.map((content){return content.path;}).toList();
-    List<String> fpaths = ["images/logo.png", "images/sample.jpeg"];
-    setState(() {
-      file_dates = calc_dates(fpaths);
-    });
+    String cpath = await camerapath();
+    dirpath = '${cpath}/${id}';
+
+    // IDのセーブパスに画像があるなら、日付：ファイルパスのリストを作成、そうでなければ空のMapを
+    try{
+      List<FileSystemEntity> contents = Directory(dirpath).listSync();
+      if (contents != null){
+        setState(() {
+          file_dates = calc_dates(contents);
+        });
+      }else{
+        file_dates = {};
+      }
+    }catch(e){
+      print(e);
+      file_dates = {};
+    }
+
+    print(file_dates);
+
+    // IPアドレスの形式をチェックして問題なければ、
     if(checkIP4(ip4)){
+       // アップロード中に変更
+       // test用のURLにアクセスし、結果がでれば
+       // アップロード中を終了する。
        setState(() {
          isUploading = true;
-       });
-       var res = await testWiFi(convertip2url(ip4));
+       });       
+       var url_tmp = convertip2url(ip4);
+       var res = await testWiFi(url_tmp);
        setState(() {
          isUploading = false;
        });
        print(["WiFi check", res]);
+
+       // testURLをチェックがOKなら
+       // OKに変更し、アップロードURLを作成
+       // もしNGなら、チェックダイアログを表示
        if (res){
          setState(() {
            isOk = true;
+           url = url_tmp + "/image";
          });
        }else{
           String err = "転送先のURLを確認しましたが、接続できません";
@@ -109,8 +246,11 @@ class _GalleryPageState extends State<GalleryPage> {
       setState(() {
         isOk = false;
       });
+
     }
   }
+
+
 
   @override
   void initState() {
@@ -122,6 +262,13 @@ class _GalleryPageState extends State<GalleryPage> {
 
   @override
   Widget build(BuildContext context) {
+    // file_datesの日付のうち、新しいものから順に取得
+    List<String> dates = file_dates.keys.toList()..sort();
+    dates = dates.reversed.toList();
+    // 画面横幅から、1/3の幅で、高さは4:3を想定
+    double grid_width = MediaQuery.of(context).size.width;
+    double solo_width = grid_width / n_column;
+    double solo_height = solo_width * 3/4;
 
     // AppBarに表示するためのIcon
     Widget icon_home = IconButton(
@@ -181,13 +328,6 @@ class _GalleryPageState extends State<GalleryPage> {
 
 
 
-    // file_datesの日付のうち、新しいものから順に取得
-    List<String> dates = file_dates.keys.toList()..sort();
-    dates = dates.reversed.toList();
-    // 画面横幅から、1/3の幅で、高さは4:3を想定
-    double grid_width = MediaQuery.of(context).size.width;
-    double solo_width = grid_width / 3;
-    double solo_height = solo_width * 3/4;
 
     List<Widget> contents(){
       // 日付が一日もなければ空のContainerを
@@ -199,27 +339,30 @@ class _GalleryPageState extends State<GalleryPage> {
         return dates.map((date){
           // 日付ごとに、ファイル名を取得
           var files = file_dates[date];
-          var intlist = Iterable<int>.generate((files.length~/3)+1).toList();
-          var lastint = files.length~/3;
-          var restint = files.length - 3 * lastint;
-          var idxlist = intlist.map((idx){
-            if (idx != lastint){
-              return List<int>.generate(3, (int index){
-                return 3 * idx + index;
-              });
-            }else{
-              return List<int>.generate(3, (int index){
-                if (index < restint){
-                  return 3 * idx + index;
-                }else{
-                  return -1;
-                }
-              });
+          var lastint = files.length~/n_column;
+          var restint = files.length - n_column * lastint;
+          List<List<int>> idxlist = [];
+          if(restint == 0){
+            for(var i = 0; i < lastint; i++){
+              idxlist.add(List<int>.generate(n_column, (int index){
+                return n_column * i + index;
+              }));
             }
-          }).toList();
-          // idxlistは[[0,1,2], [3, -1, -1]]のような、２次元配列
-          // -1は画像が存在しないことを表す
-          
+          }else{
+            for(var i = 0; i < lastint; i++){
+              idxlist.add(List<int>.generate(n_column, (int index){
+                return n_column * i + index;
+              }));
+            }
+            idxlist.add(List<int>.generate(n_column, (int index){
+              if(index < restint){
+                return n_column * lastint + index;
+              }else{
+                return -1;
+              }
+            }));
+          }
+                  
           //　単独の高さから、画像を収録する箱の高さを計算　（ファイル数/3の切り上げ）
           double grid_height = (solo_height * (files.length/3).ceil()).toDouble();
           return Padding(
@@ -274,7 +417,7 @@ class _GalleryPageState extends State<GalleryPage> {
                                             onLongPressImageButton(files[idx]);
                                           },
                                           child: RawMaterialButton(
-                                            child: Image.asset(files[idx]),
+                                            child: Image.file(files[idx]),
                                             onPressed: null,
                                             padding: EdgeInsets.all(5.0),
                                           ),

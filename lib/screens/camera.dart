@@ -1,13 +1,17 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
-
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:huabang_application/models/id.dart';
 import 'package:huabang_application/models/ip4.dart';
 import 'package:huabang_application/models/transfer.dart';
 import 'package:huabang_application/other.dart';
+import 'package:hardware_buttons/hardware_buttons.dart' as HardwareButtons;
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+
 
 class CameraPage extends StatefulWidget{
   CameraPage({Key key}) : super(key: key);
@@ -16,14 +20,19 @@ class CameraPage extends StatefulWidget{
 }
 
 class _CameraPageState extends State<CameraPage>{
-
+  CameraController controller;
+  CameraDescription camera;
+  double zoom = 1.0;
   bool isAuto;
   String id;
   List<String> ip4;
   bool isUploading = false;
   String isNRL = "N";
   String url;
+  String dirpath;
+  StreamSubscription<HardwareButtons.VolumeButtonEvent> _volumeButtonSubscription;
 
+  // 色合い
   Color eyeColor (){
     if (isUploading){
       return Colors.grey;
@@ -52,6 +61,7 @@ class _CameraPageState extends State<CameraPage>{
     }
   }
 
+
   void nextNRL(){
     if (isNRL == "N"){
       setState(() {
@@ -68,14 +78,126 @@ class _CameraPageState extends State<CameraPage>{
     }
   }
 
+  void onPressZoomInButton(){
+    if (!isUploading){
+      if (zoom < 5){
+        setState(() {
+          zoom += 0.5;
+        });
+       controller.setZoom(zoom);
+        print(["zoom In", zoom]);
+      }
+    }
+  }
+
+  void onPressZoomOutButton(){
+    if (!isUploading){
+      if (zoom > 1){
+        setState(() {
+          zoom -= 0.5;
+        });
+        controller.setZoom(zoom);
+        print(["zoom Out", zoom]);
+       }
+    }
+  }
+
+  void onPressTakePictureButton()async{
+    await Directory(dirpath).create(recursive: true);
+    print(dirpath);
+    if (isUploading == false){
+        // ここからが処理
+      try{
+        var dayfile = makeFileName(id, isNRL);
+        var day = dayfile[0];
+        var file = dayfile[1];
+        Directory(dirpath).createSync(recursive: false);
+        var fpath = '${dirpath}/${file}';
+        print(["Save", id, day, file]);
+        try{
+          if(controller.value.isInitialized && !controller.value.isTakingPicture){
+            await controller.takePicture(fpath);
+            if (isAuto){
+              setState(() {
+                isUploading = true;
+              });
+              print(["Upload", id, day, file, fpath]);
+              var uploadResult = await uploadFile(url, file, fpath);
+              setState(() {
+                isUploading = false;
+              });
+              if(!uploadResult){
+                String err = "アップロードに失敗しました";
+                stopDialog(err, context);
+              }
+            }
+          }else{
+            print("bad condition for take picture");
+          }
+        }catch(e){
+          print("other error in take picture");
+        }
+      }catch(e){
+        print(["undifined error", e]);
+      }
+    }
+  }
+
+  void onPressLRChangeButton(){
+    if (!isUploading){
+      nextNRL();
+      print("LR change");
+    }
+  }
+
+  void onPressGalleryButton(BuildContext context){
+    if (!isUploading){
+      Navigator.of(context).pushNamed('/gallery'); 
+    }
+  }
+
+  void onPressConfigButton(BuildContext context){
+    if(!isUploading){
+      Navigator.of(context).pushNamed('/config'); 
+    }
+  }
+
+  void onPressHomeButton(BuildContext context){
+    if(!isUploading){
+      Navigator.of(context).pushNamed('/'); 
+    }
+  }
 
 
   Future<void> initFunction()async{
+    // Providerのデータ読み込みおよび反映
+    id = Provider.of<ID>(context, listen: false).value;
+    ip4 = Provider.of<IP4>(context, listen: false).value;      
     setState(() {
-      id = Provider.of<ID>(context, listen: false).value;
       isAuto = Provider.of<Transfer>(context, listen:false).value;
-      ip4 = Provider.of<IP4>(context, listen: false).value;      
     });
+
+    _volumeButtonSubscription = HardwareButtons.volumeButtonEvents.listen((event) {
+      setState((){
+        onPressTakePictureButton();
+      });
+    });
+
+    // Camera画面
+    List<CameraDescription> cameras = await availableCameras();
+    camera = cameras[0];
+    controller = CameraController(camera, ResolutionPreset.ultraHigh);
+    await controller.initialize();
+    if (!mounted) {
+      return;
+    }  
+    setState(() {});
+    // Directoryの準備
+    var path = await camerapath();
+    dirpath = '${path}/${id}';
+
+
+    // AutoおよびIPアドレスのチェック
     if(isAuto){
       if(checkIP4(ip4)==true){
         // IPアドレスからURLに変換し、
@@ -93,7 +215,7 @@ class _CameraPageState extends State<CameraPage>{
         // 結果が良ければ、正式なURLに代入する
         // 悪けれあば、エラーダイアログ
         if(checkresult){
-          url = url_tmp;
+          url = url_tmp + "/image";
         }else{
           String err = "転送先のURLを確認しましたが、接続できません";
           // 何かしらのエラーダイアログ、Homeボタンか、Configボタン
@@ -110,6 +232,8 @@ class _CameraPageState extends State<CameraPage>{
       print("自動転送モードではありません、よろしいでしょうか？");
       confirmDialog(context);
     }
+
+
   }
 
   @override
@@ -121,6 +245,13 @@ class _CameraPageState extends State<CameraPage>{
     });
   }
 
+  @override
+  void dispose() {
+    // controller.dispose();
+    super.dispose();
+  }
+
+
 
   @override
   Widget build(BuildContext context){
@@ -128,60 +259,21 @@ class _CameraPageState extends State<CameraPage>{
     double height = all_height/3;
     double width = all_height/5;
 
-
-    void onPressZoomInButton(){
-      if (!isUploading){
-        print("zoom In");
-      }
-    }
-
-    void onPressZoomOutButton(){
-      if (!isUploading){
-        print("zoom Out");
-      }
-    }
-
-    void onPressTakePictureButton()async{
-      if (isUploading == false){
-        // ここからが処理
-        var dayfile = makeFileName(id, isNRL);
-        var day = dayfile[0];
-        var file = dayfile[1];
-        print(["Save", id, day, file]);
-        if (isAuto){
-          setState(() {
-            isUploading = true;
-          });
-          print(["Upload", id, day, file]);
-          setState(() {
-            isUploading = false;
-          });
+    Widget cameraScreen(BuildContext context, CameraController controller){
+      try{
+        if (controller.value.isInitialized){
+          return RotatedBox(
+            quarterTurns: 3,
+            child: AspectRatio(
+              aspectRatio: controller.value.aspectRatio,
+              child: CameraPreview(controller)
+            ),
+          );
+        }else{
+          return Container();
         }
-      }
-    }
-
-    void onPressLRChangeButton(){
-      if (!isUploading){
-        nextNRL();
-        print("LR change");
-      }
-    }
-
-    void onPressGalleryButton(BuildContext context){
-      if (!isUploading){
-        Navigator.of(context).pushNamed('/gallery'); 
-      }
-    }
-
-    void onPressConfigButton(BuildContext context){
-      if(!isUploading){
-        Navigator.of(context).pushNamed('/config'); 
-      }
-    }
-
-    void onPressHomeButton(BuildContext context){
-      if(!isUploading){
-        Navigator.of(context).pushNamed('/'); 
+      }catch(e){
+        return Container();
       }
     }
 
@@ -204,13 +296,15 @@ class _CameraPageState extends State<CameraPage>{
       }
     }
 
+
     return Scaffold(
       body:  Stack(
         children: <Widget>[
           // 後ろの写真
           Container(
             alignment: Alignment.centerLeft,
-            child: Image.asset("images/sample.jpeg"),
+            //child: cameraScreen(context, controller),
+            child: cameraScreen(context, controller),
           ),
 
           // 左上のズームインとアウト
@@ -231,7 +325,7 @@ class _CameraPageState extends State<CameraPage>{
                         alignment: Alignment.centerLeft,
                         child: IconButton(                          
                           icon: Icon(Icons.zoom_in, 
-                            color: otherColor(), 
+                            color: zoom < 5 ? otherColor(): Colors.grey, 
                             size: width/2
                           ),
                           onPressed: (){
@@ -246,7 +340,7 @@ class _CameraPageState extends State<CameraPage>{
                         alignment: Alignment.centerLeft,
                         child: IconButton(
                           icon: Icon(Icons.zoom_out, 
-                            color: otherColor(), 
+                            color: zoom > 1 ? otherColor(): Colors.grey, 
                             size: width/2
                           ),
                           onPressed: (){
@@ -363,21 +457,9 @@ class _CameraPageState extends State<CameraPage>{
             child: Container(
               alignment: Alignment.centerLeft,
               height: width,
-              width: width * 2,
+              width: width,
               child: Row(
                 children: <Widget>[
-                  Expanded(
-                    flex: 1,
-                    child: IconButton(
-                      icon: Icon(Icons.settings, 
-                        color: outerColor(), 
-                        size: width/2
-                      ),
-                      onPressed: (){
-                        onPressConfigButton(context);
-                      },
-                    ),
-                  ),
                   Expanded(
                     flex: 1,
                     child: IconButton(
