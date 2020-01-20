@@ -2,5 +2,5 @@
 HuabangのApplication
 
 # Applicationについて
-画面校正はAdobeXDで作っていく
+画面構成はAdobeXDで作っていく
 

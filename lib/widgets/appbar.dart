@@ -8,7 +8,7 @@ class CustomAppBar extends PreferredSize {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+      // padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
       height: height,
       color: Theme.of(context).primaryColor,
       child: Stack(
